@@ -29,24 +29,24 @@ show_head_table<-function(table){
   dbListFields(db, table)
 }
 cal_grade_term<-function(name,term){
-  tmp<-sprintf("SELECT credit,point FROM %s WHERE term == %d",name,term)
+  tmp<-sprintf("SELECT sum(credit),sum(point) FROM %s WHERE term == %d",name,term)
   data<-dbGetQuery( db,tmp )
-  sum_credit<-(sum(data[,1]))
-  sum_point<-(sum(data[,2]))
-  return(sum_point/sum_credit)
+  gpa<-data[,2]/data[,1]
+
+  return(gpa)
   
 }
 cal_gpa<-function(name){
-  tmp<-sprintf("SELECT credit,point FROM %s",name)
+  tmp<-sprintf("SELECT sum(credit),sum(point) FROM %s",name)
   data<-dbGetQuery( db,tmp )
-  sum_credit<-(sum(data[,1]))
-  sum_point<-(sum(data[,2]))
-  return(sum_point/sum_credit)
+  gpa<-data[,2]/data[,1]
+  return(gpa)
   
 }
 delete_data_table <-function(name){
   tmp<-sprintf("DELETE FROM %s",name)
-  dbGetQuery(db = db,tmp)
+  print(tmp)
+  dbSendQuery(db = db,tmp)
 }
 show_data <-function(name){
   tmp<-sprintf("SELECT * FROM %s",name)
@@ -63,9 +63,11 @@ number_of_term <-function(name){
 
 table_name <-"grade"
 db <- dbConnect(SQLite(), dbname='my_database.db')
-#create_db()
-newdata <-read_file("C:\\Users\\NUMMPETCH\\Desktop\\4term2\\database\\grade_report.csv")
+dbRemoveTable(con =db, "grade")
 
+create_table()
+newdata <-read_file("C:\\Users\\NUMMPETCH\\Desktop\\4term2\\database\\grade_report.csv")
+#delete_data_table(table_name)
 for (i in 1:length(newdata$term)){
   print(newdata$name[i])
   insert_data(newdata$term[i],newdata$name[i],newdata$credit[i],newdata$grade[i],newdata$point[i])
@@ -83,4 +85,4 @@ for (g in 1:n_term){
 gpa<-cal_gpa(table_name)
 text_gpa<-sprintf("GPA = %.3f",gpa)
 print(text_gpa)
-
+dbDisconnect(con=db)
